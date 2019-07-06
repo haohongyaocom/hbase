@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Log4j 2.x 配置文件。
+1、monitorInterval 监控时间间隔为秒  log4j 2.0在重新配置的时候不会丢失之前的日志记录。
+
+2、status表示log4j2本身的日志打印级别TRACE < DEBUG < INFO < WARN < ERROR < FATAL
+
+3、如果是web项目需要在web.xml中配置
+	<context-param>
+		<param-name>log4jConfiguration</param-name>
+		<param-value>/WEB-INF/conf/log4j2.xml</param-value>
+	</context-param>
+
+	<listener>
+		<listener-class>org.apache.logging.log4j.web.Log4jServletContextListener</listener-class>
+	</listener>
+
+4、http://logging.apache.org/log4j/2.x/manual/garbagefree.html
+ -->
+<Configuration status="off" monitorInterval="1800">
+
+	<properties>
+		<property name="LOG_HOME">/Volumes/O/logs/</property>
+		<!--日志备份目录 -->
+		<property name="BACKUP_HOME">{LOG_HOME}/backup</property>
+		<property name="STAT_NAME">stat</property> 
+		<property name="FILE_NAME">bigdata</property>
+	</properties>
+
+	
+	<!--
+	%d{HH:mm:ss.SSS} 表示输出到毫秒的时间
+	%t 输出当前线程名称
+	%-5level 输出日志级别，-5表示左对齐并且固定输出5个字符，如果不足在右边补0
+	%logger 输出logger名称
+	%msg 日志文本
+	%n 换行
+	%L 输出行号
+	%M 输出所在方法名
+	%l  输出语句所在的行数, 包括类名、方法名、文件名、行数
+	  -->
+	<Appenders>
+		<!-- 输出到控制台 -->
+		<Console name="Console" target="SYSTEM_OUT"  follow="true">
+			<PatternLayout
+				pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} %l - %msg%n" />
+			<Filters>
+				<!--控制台只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch） -->
+				<ThresholdFilter level="debug" onMatch="ACCEPT" onMismatch="DENY" />
+			</Filters>
+		</Console>
+		
+		
+		<RollingRandomAccessFile name="all-debug-file"
+			fileName="${LOG_HOME}/${FILE_NAME}_all_debug.log"
+			filePattern="${LOG_HOME}/$${date:yyyy-MM}/${FILE_NAME}_all_debug-%d{yyyy-MM-dd HH:mm}-%i.log.gz" >
+			<PatternLayout
+				pattern="%date{yyyy-MM-dd HH:mm:ss.SSS} %level [%thread][%file:%line] - %msg%n" />
+			<Policies>
+				<SizeBasedTriggeringPolicy size="10 MB" />
+			</Policies>
+			<DefaultRolloverStrategy max="20" />
+		</RollingRandomAccessFile>
+		
+		
+		
+		<!-- 
+		fileName    指定当前日志文件的位置和文件名称
+		filePattern  指定当发生Rolling时，文件的转移和重命名规则
+		SizeBasedTriggeringPolicy  指定当文件体积大于size指定的值时，触发Rolling
+		DefaultRolloverStrategy  指定最多保存的文件个数
+		TimeBasedTriggeringPolicy  这个配置需要和filePattern结合使用，//
+		注意filePattern中配置的文件重命名规则是${FILE_NAME}-%d{yyyy-MM-dd HH-mm}-%i，
+		最小的时间粒度是mm，即分钟，TimeBasedTriggeringPolicy指定的size是1，结合起来就是每1分钟生成一个新文件。
+		如果改成%d{yyyy-MM-dd HH}，最小粒度为小时，则每一个小时生成一个文件。
+		
+		 -->
+		<RollingRandomAccessFile name="debug-file"
+			fileName="${LOG_HOME}/${FILE_NAME}_debug.log"
+			filePattern="${LOG_HOME}/$${date:yyyy-MM}/${FILE_NAME}_debug-%d{yyyy-MM-dd HH:mm}-%i.log.gz" >
+			 <Filters>  
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY" />  
+            </Filters>  
+			<PatternLayout
+				pattern="%date{yyyy-MM-dd HH:mm:ss.SSS} %level [%thread][%file:%line] - %msg%n" />
+			<Policies>
+				<SizeBasedTriggeringPolicy size="10 MB" />
+			</Policies>
+			<DefaultRolloverStrategy max="20" />
+		</RollingRandomAccessFile>
+		
+		<RollingRandomAccessFile name="error-file"  
+            fileName="${LOG_HOME}/${FILE_NAME}_error.log"  
+            filePattern="${LOG_HOME}/$${date:yyyy-MM}/${FILE_NAME}_error-%d{yyyy-MM-dd HH:mm}-%i.log.gz">  
+            <Filters>  
+                <ThresholdFilter level="fatal" onMatch="ACCEPT" onMismatch="NEUTRAL" />  
+                <ThresholdFilter level="warn" onMatch="ACCEPT" onMismatch="DENY" />  
+            </Filters>  
+            <PatternLayout pattern="%date{yyyy-MM-dd HH:mm:ss.SSS} %level [%thread][%file:%line] - %msg%n" />  
+            <Policies>  
+                <SizeBasedTriggeringPolicy size="10 MB" />  
+            </Policies>  
+            <!-- DefaultRolloverStrategy属性如不设置，则默认为最多同一文件夹下7个文件，这里设置了20 -->
+            <DefaultRolloverStrategy max="20" />  
+        </RollingRandomAccessFile>  
+		
+	</Appenders>
+	
+	
+	
+
+	<Loggers>
+		<!-- 三方包日志 -->
+		<logger name="org.springframework" level="info" />
+		<logger name="com.hengtianjf" level="debug" />
+		<logger name="io.netty" level="info" />
+		<logger name="org.hibernate" level="info" />
+		<logger name="org.mybatis.spring" level="info" />
+		<logger name="redis.client" level="info" />
+		<logger name="org.apache" level="info" />
+		<logger name="org.aopalliance" level="info" />
+		<logger name="org.junit" level="info" />
+		<logger name="org.hamcrest" level="info" />
+		<logger name="org.aspectj" level="info" />
+		<logger name="com.alibaba" level="info" />
+		<logger name="net.sf" level="info" />
+		<logger name="org.jboss" level="info" />
+		<logger name="net.sourceforge" level="info" />
+		<logger name="org.apache.ibatis" level="info" />
+		<logger name="com.github" level="info" />
+		<logger name="com.aspectj" level="info" />
+		<logger name="com.mongondb" level="info" />
+		<logger name="com.google" level="info" />
+		<logger name="redis.clients" level="info" />
+		<logger name="org.bouncycastle" level="info" />
+		<logger name="com.mysql" level="info" />
+		<logger name="com.aopalliance" level="info" />
+		<logger name="javax.servlet" level="info" />
+	
+		<!-- 全局配置 -->
+		<Root level="DEBUG">
+			<AppenderRef ref="Console" />
+			<AppenderRef ref="all-debug-file" />
+			<AppenderRef ref="debug-file" />
+			<AppenderRef ref="error-file" />
+		</Root>
+	</Loggers>
+</Configuration>
